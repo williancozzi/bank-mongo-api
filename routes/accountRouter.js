@@ -88,10 +88,10 @@ app.get("/accounts/:agency/:account", async (req, res) => {
     });
 
     if (!accounts) {
-      console.log("Agencia ou conta inválida(s)");
-      res.send("Agencia ou conta inválida(s)");
+      console.log("Agência ou conta inválida(s)");
+      res.send("Agência ou conta inválida(s)");
     } else {
-      res.sendStatus(accounts.balance);
+      res.send(accounts);
       console.log("Balance: ", accounts.balance);
     }
   } catch (error) {
@@ -127,18 +127,12 @@ app.delete("/accounts/delete/:agency/:account", async (req, res) => {
   }
 });
 
-// Crie um endpoint para realizar transferências entre contas. Este endpoint deverá
-// receber como parâmetro o número da “conta” origem, o número da “conta” destino e
-// o valor de transferência. Este endpoint deve validar se as contas são da mesma
-// agência para realizar a transferência, caso seja de agências distintas o valor de tarifa
-// de transferencia (8) deve ser debitado na “conta” origem. O endpoint deverá retornar
-// o saldo da conta origem.
-
 app.patch(
   "/accounts/transfer/:fromAccountNumber/:toAccountNumber/:value",
   async (req, res) => {
     try {
       const { fromAccountNumber, toAccountNumber, value } = req.params;
+      let fare = 0;
 
       if (value <= 0) {
         res.status(404).send("Operação inválida!");
@@ -152,28 +146,64 @@ app.patch(
         });
 
         if (fromAccount.agencia !== toAccount.agencia) {
-          await accountModel.findOneAndUpdate(
-            {
-              balance: { $gt: value + 8 },
-            },
-            {
-              $inc: { balance: -value - 8 },
-            }
-          );
-        } else {
-          console.log("deu bom");
+          fare = 8;
         }
-        // fromAccount =
 
-        // console.log(fromAccount.conta);
+        await accountModel.findOneAndUpdate(
+          {
+            conta: fromAccount.conta,
+          },
+          {
+            $inc: { balance: -value - fare },
+          },
+          {
+            new: true,
+          }
+        );
 
-        // console.log("from ", fromAccountNumber);
-        // console.log("to ", toAccountNumber);
+        await accountModel.findOneAndUpdate(
+          {
+            conta: toAccount.conta,
+          },
+          {
+            $inc: { balance: +value },
+          },
+          {
+            new: true,
+          }
+        );
+        res.status(200).send("Transferencia realizada com sucesso!");
       }
     } catch (error) {
       res.status(500).send(error);
     }
   }
 );
+
+app.get("/accounts/:agency", async (req, res) => {
+  try {
+    const { agency } = req.params;
+    let totalBalance = 0;
+
+    const accounts = await accountModel.find({
+      agencia: agency,
+    });
+
+    accounts.forEach((account) => {
+      totalBalance = account.balance + totalBalance;
+    });
+
+    if (!accounts) {
+      console.log("Agência inválida!");
+      res.send("Agência inválida!");
+    } else {
+      let average = (totalBalance / accounts.length).toFixed(2);
+      res.send(average);
+      console.log("Balances average: ", average);
+    }
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
 
 export { app as accountRouter };
