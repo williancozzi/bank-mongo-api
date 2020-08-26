@@ -92,6 +92,35 @@ app.get("/accounts/:agency/:account", async (req, res) => {
       res.send("Agencia ou conta inválida(s)");
     } else {
       res.sendStatus(accounts.balance);
+      console.log("Balance: ", accounts.balance);
+    }
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+app.delete("/accounts/delete/:agency/:account", async (req, res) => {
+  try {
+    const { agency, account } = req.params;
+
+    const accounts = await accountModel.findOneAndDelete({
+      agencia: agency,
+      conta: account,
+    });
+
+    if (accounts) {
+      const totalAccounts = await accountModel.countDocuments({
+        agencia: agency,
+      });
+      console.log(
+        "Conta deletada com sucesso! Total de contas ativas na agência: ",
+        totalAccounts
+      );
+
+      res.send("Conta deletada com sucesso!");
+    } else {
+      console.log("Conta ou agência não localizada!");
+      res.send("Conta ou agência não localizada!");
     }
   } catch (error) {
     res.status(500).send(error);
