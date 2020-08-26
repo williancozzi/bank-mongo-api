@@ -78,4 +78,24 @@ app.patch("/accounts/withdraw/:agency/:account/:value", (req, res) => {
   }
 });
 
+app.get("/accounts/:agency/:account", async (req, res) => {
+  try {
+    const { agency, account } = req.params;
+
+    const accounts = await accountModel.findOne({
+      agencia: agency,
+      conta: account,
+    });
+
+    if (!accounts) {
+      console.log("Agencia ou conta inválida(s)");
+      res.send("Agencia ou conta inválida(s)");
+    } else {
+      res.sendStatus(accounts.balance);
+    }
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 export { app as accountRouter };
