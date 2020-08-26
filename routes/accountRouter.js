@@ -78,7 +78,7 @@ app.patch("/accounts/withdraw/:agency/:account/:value", (req, res) => {
   }
 });
 
-app.get("/accounts/:agency/:account", async (req, res) => {
+app.get("/accounts/balance/:agency/:account", async (req, res) => {
   try {
     const { agency, account } = req.params;
 
@@ -180,7 +180,7 @@ app.patch(
   }
 );
 
-app.get("/accounts/:agency", async (req, res) => {
+app.get("/accounts/average/:agency", async (req, res) => {
   try {
     const { agency } = req.params;
     let totalBalance = 0;
@@ -201,6 +201,27 @@ app.get("/accounts/:agency", async (req, res) => {
       res.send(average);
       console.log("Balances average: ", average);
     }
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+app.get("/accounts/lesserbalances/:limit", async (req, res) => {
+  try {
+    const { limit } = req.params;
+
+    const accounts = await accountModel
+      .find(
+        {},
+        {
+          name: 0,
+        }
+      )
+      .limit(Number(limit))
+      .sort({ balance: 1 });
+
+    res.send(accounts);
+    console.log(accounts);
   } catch (error) {
     res.status(500).send(error);
   }
