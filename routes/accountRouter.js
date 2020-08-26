@@ -127,4 +127,53 @@ app.delete("/accounts/delete/:agency/:account", async (req, res) => {
   }
 });
 
+// Crie um endpoint para realizar transferências entre contas. Este endpoint deverá
+// receber como parâmetro o número da “conta” origem, o número da “conta” destino e
+// o valor de transferência. Este endpoint deve validar se as contas são da mesma
+// agência para realizar a transferência, caso seja de agências distintas o valor de tarifa
+// de transferencia (8) deve ser debitado na “conta” origem. O endpoint deverá retornar
+// o saldo da conta origem.
+
+app.patch(
+  "/accounts/transfer/:fromAccountNumber/:toAccountNumber/:value",
+  async (req, res) => {
+    try {
+      const { fromAccountNumber, toAccountNumber, value } = req.params;
+
+      if (value <= 0) {
+        res.status(404).send("Operação inválida!");
+      } else {
+        const fromAccount = await accountModel.findOne({
+          conta: fromAccountNumber,
+        });
+
+        const toAccount = await accountModel.findOne({
+          conta: toAccountNumber,
+        });
+
+        if (fromAccount.agencia !== toAccount.agencia) {
+          await accountModel.findOneAndUpdate(
+            {
+              balance: { $gt: value + 8 },
+            },
+            {
+              $inc: { balance: -value - 8 },
+            }
+          );
+        } else {
+          console.log("deu bom");
+        }
+        // fromAccount =
+
+        // console.log(fromAccount.conta);
+
+        // console.log("from ", fromAccountNumber);
+        // console.log("to ", toAccountNumber);
+      }
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  }
+);
+
 export { app as accountRouter };
