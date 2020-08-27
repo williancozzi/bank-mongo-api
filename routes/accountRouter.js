@@ -243,10 +243,6 @@ app.get("/accounts/greaterbalances/:limit", async (req, res) => {
   }
 });
 
-// 12. Crie um endpoint que irá transferir o cliente com maior saldo em conta de cada
-// agência para a agência private agencia=99. O endpoint deverá retornar a lista dos
-// clientes da agencia private.
-
 app.patch("/accounts/private", async (req, res) => {
   try {
     const accounts = await accountModel.find({});
