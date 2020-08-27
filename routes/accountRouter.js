@@ -227,4 +227,61 @@ app.get("/accounts/lesserbalances/:limit", async (req, res) => {
   }
 });
 
+app.get("/accounts/greaterbalances/:limit", async (req, res) => {
+  try {
+    const { limit } = req.params;
+
+    const accounts = await accountModel
+      .find({})
+      .limit(Number(limit))
+      .sort({ balance: -1, name: 1 });
+
+    res.send(accounts);
+    console.log(accounts);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+// 12. Crie um endpoint que irá transferir o cliente com maior saldo em conta de cada
+// agência para a agência private agencia=99. O endpoint deverá retornar a lista dos
+// clientes da agencia private.
+
+app.patch("/accounts/private", async (req, res) => {
+  try {
+    const accounts = await accountModel.find({});
+    const agencies = await accountModel.distinct("agencia");
+    let biggestList = [];
+
+    agencies.forEach((agency) => {
+      let biggestBalances = 0;
+      let biggest = [];
+      accounts.forEach((account) => {
+        if (account.balance > biggestBalances && account.agencia === agency) {
+          biggestBalances = account.balance;
+          biggest = account;
+        }
+      });
+      biggestList.push(biggest);
+    });
+
+    biggestList.forEach(async (item) => {
+      await accountModel.findOneAndUpdate(
+        { _id: item._id },
+        {
+          agencia: 99,
+        },
+        {
+          new: true,
+        }
+      );
+    });
+
+    const privateAgency = await accountModel.find({ agencia: 99 });
+    res.send(privateAgency);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 export { app as accountRouter };
